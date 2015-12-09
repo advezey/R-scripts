@@ -19,7 +19,10 @@ fcr <- sqlQuery(connSQL, "
                 where b.CSARNetworkID = 2
                 AND c.ContactDate >= '2015-10-10'"
                 , stringsAsFactors=F)
+        fcr <- filter(fcr, fcr$IssueType != 'BOPIS Issue')
+        fcr <- filter(fcr, fcr$IssueType != 'Gift Card Inquiry')
 
+set.seed(77)
 trainingdata <- fcr[sample(1:nrow(fcr),10000,replace = FALSE),c(9,18,19)]
 trainingdata$IssueType <- as.factor(trainingdata$IssueType)
 trainingdata$OrderIssueTypeName <- as.factor(trainingdata$OrderIssueTypeName)
@@ -38,4 +41,10 @@ probtest[,2:6]<-predict(tdmodel, newdata=probtest,"probs")
                                 ,'Fax', 'Unknown')
         probtest[,2:6] <- format(probtest[,2:6], scientific=FALSE)
 
-# tdsample <- fcr[sample(1:nrow(fcr),10000,replace = FALSE),c(2,5)]       
+IssueTypeFreq <- table(trainingdata$IssueType)
+IssueTypeProb <- aggregate.data.frame(fcr$IssueType
+                                      , by = list(fcr$IssueType)
+                                      , FUN = length)    
+        IssueTypeProb$Percent_Of_Total <- IssueTypeProb$x/sum(IssueTypeProb$x)
+      
+chisq.test(IssueTypeFreq,p=IssueTypeProb$Percent_Of_Total)
