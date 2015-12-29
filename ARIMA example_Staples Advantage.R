@@ -19,8 +19,8 @@ RawVolumeData <- sqlQuery(connSQL,paste0("select businessunit, fiscal_period_nam
 AggVolumebyPeriod <- aggregate.data.frame(RawVolumeData$acdcalls
                                           ,list(RawVolumeData$fiscal_period_name_long)
                                           ,sum)
-        AggVolumebyPeriod[1,2] <- 270000
-        AggVolumebyPeriod[nrow(AggVolumebyPeriod),2] <- 270000
+        AggVolumebyPeriod[1,2] <- 270000 #Replacing abnormal obs due to database launch
+        AggVolumebyPeriod[nrow(AggVolumebyPeriod),2] <- 270000 #Replacing abnormal obs due to incomplete period
         colnames(AggVolumebyPeriod) <- c('Fiscal Period','ACDCalls')
 
 TimeSeries <- ts(AggVolumebyPeriod$ACDCalls)
@@ -35,6 +35,11 @@ Prediction <- forecast.Arima(ARIMA,level = 80)
         plot(Prediction)
         summary(Prediction)
 
+# auto.arima() only looks at 4 different types of ARIMA models that are not
+# sufficient for forecasting purposes that are more predictable than random walks or 
+# walks with drifts. Using the manual Arima() function
+# allows for more useful ARIMA orders as it pertains to forecasting contact volume.
+                
 ARIMA2 <- Arima(TimeSeries,order = c(11,1,2),include.mean = FALSE
                 ,include.drift = TRUE)
         acf(residuals(ARIMA2))
